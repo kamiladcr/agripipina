@@ -3,20 +3,41 @@ from telebot.types import Message
 
 bot = TeleBot("6139726981:AAHYXuNByfotN4RFPkIoepNKrSaaSvyJJMg", parse_mode=None)
 
-# add dict with chat.id and masks
-# persistence (add class with methods init, append, clear)
 
-class State():
+class State:
 	def __init__(self):
-		self.masks = []
-	def append(self, value):
-		self.masks.append(value)
-	def clear(self):
-		self.masks.clear()
-	def __str__(self):
-		masks = self.masks
+		self.chat_state = {}
+
+	def append(self, chat_id: int, value: str) -> None:
+		if chat_id in self.chat_state:
+			self.chat_state[chat_id].append(value)
+		else:
+			self.chat_state[chat_id] = [value]
+		self.flush()
+
+	def clear(self, chat_id: int) -> None:
+		self.chat_state[chat_id] = []
+		self.flush()
+
+	def to_str(self, chat_id: int) -> str:
+		masks = self.get_masks(chat_id)
 		return "no masks" if masks == [] else "masks: " + str.join(", ", masks)
 
+	def validate(self, chat_id: int, text: str) -> bool:
+		masks = self.get_masks(chat_id)
+		return any(map(lambda mask: mask in text, masks))
+
+	def get_masks(self, chat_id: int):
+		return self.chat_state[chat_id] if chat_id in self.chat_state else []
+
+	def flush(self) -> None:
+		"""
+		self.chat_state write on file
+		"""
+		pass
+
+
+masks = State()
 
 
 @bot.message_handler(commands=["help"])
@@ -26,26 +47,24 @@ def help(message):
 		"""
 		hi.
 		this bot pins links so you can check them out later.
-		use the command /pin to specify which links you would like to pin
+		/pin to specify which links you would like to pin
 		e.g. /pin spotify soundcloud
-		add command to clear masks
-		show to show all masks
+		/show to view the list to pin
+		/clear to clear the masks list
 		""",
 	)
 
 
-masks = State()
-
 @bot.message_handler(commands=["show"])
 def show_masks(message: Message):
-	bot.send_message(message.chat.id, str(masks))
+	bot.send_message(message.chat.id, masks.to_str(message.chat.id))
 
 
 @bot.message_handler(commands=["pin"])
 def add_masks(message: Message):
 	user_input = message.text if message.text else ""
 	for mask in user_input.split()[1:]:
-		masks.append(mask)
+		masks.append(message.chat.id, mask)
 	if message.text == "/pin":
 		text = "usage: /pin spotify soundcloud"
 		bot.send_message(message.chat.id, text)
@@ -54,7 +73,7 @@ def add_masks(message: Message):
 
 @bot.message_handler(commands=["clear"])
 def clear_masks(message: Message):
-	masks.clear()
+	masks.clear(message.chat.id)
 	show_masks(message)
 
 
@@ -63,7 +82,7 @@ def process_masks(message: Message) -> bool:
 	user_input = message.text if message.text else ""
 	for entity in entities:
 		text = user_input[entity.offset : entity.length]
-		has_masks = any(map(lambda mask: mask in text, masks.masks))
+		has_masks = masks.validate(message.chat.id, text)
 		if entity.type == "url" and has_masks:
 			return True
 	return False
