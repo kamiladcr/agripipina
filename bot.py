@@ -1,5 +1,6 @@
 from telebot import TeleBot
 from telebot.types import Message
+import json
 
 bot = TeleBot("6139726981:AAHYXuNByfotN4RFPkIoepNKrSaaSvyJJMg", parse_mode=None)
 
@@ -31,10 +32,8 @@ class State:
 		return self.chat_state[chat_id] if chat_id in self.chat_state else []
 
 	def flush(self) -> None:
-		"""
-		self.chat_state write on file
-		"""
-		pass
+		with open("chat_state.json", "w") as write_file:
+			json.dump(self.chat_state, write_file)
 
 
 masks = State()
@@ -45,12 +44,15 @@ def help(message):
 	bot.reply_to(
 		message,
 		"""
-		hi.
-		this bot pins links so you can check them out later.
-		/pin to specify which links you would like to pin
-		e.g. /pin spotify soundcloud
-		/show to view the list to pin
-		/clear to clear the masks list
+hi.
+this bot pins links so you can check them out later.
+
+/pin to specify which links you would like to pin
+e.g. /pin spotify soundcloud
+
+/show to view the masks you use
+
+/clear to clear the masks list
 		""",
 	)
 
