@@ -7,32 +7,38 @@ bot = TeleBot("6139726981:AAHYXuNByfotN4RFPkIoepNKrSaaSvyJJMg", parse_mode=None)
 
 class State:
 	def __init__(self):
-		self.chat_state = {}
+		try:
+			with open("chat_state.json", "r") as read_file:
+				data = read_file.read()
+				self.chat_state = json.loads(data)
+		except Exception:
+			self.chat_state = {}
 
-	def append(self, chat_id: int, value: str) -> None:
+	def append(self, chat_id: str, value: str) -> None:
 		if chat_id in self.chat_state:
 			self.chat_state[chat_id].append(value)
 		else:
 			self.chat_state[chat_id] = [value]
 		self.flush()
 
-	def clear(self, chat_id: int) -> None:
+	def clear(self, chat_id: str) -> None:
 		self.chat_state[chat_id] = []
 		self.flush()
 
-	def to_str(self, chat_id: int) -> str:
+	def to_str(self, chat_id: str) -> str:
 		masks = self.get_masks(chat_id)
 		return "no masks" if masks == [] else "masks: " + str.join(", ", masks)
 
-	def validate(self, chat_id: int, text: str) -> bool:
+	def validate(self, chat_id: str, text: str) -> bool:
 		masks = self.get_masks(chat_id)
 		return any(map(lambda mask: mask in text, masks))
 
-	def get_masks(self, chat_id: int):
+	def get_masks(self, chat_id: str):
 		return self.chat_state[chat_id] if chat_id in self.chat_state else []
 
 	def flush(self) -> None:
 		with open("chat_state.json", "w") as write_file:
+			print(json.dumps(self.chat_state))
 			json.dump(self.chat_state, write_file)
 
 
@@ -59,14 +65,14 @@ e.g. /pin spotify soundcloud
 
 @bot.message_handler(commands=["show"])
 def show_masks(message: Message):
-	bot.send_message(message.chat.id, masks.to_str(message.chat.id))
+	bot.send_message(message.chat.id, masks.to_str(str(message.chat.id)))
 
 
 @bot.message_handler(commands=["pin"])
 def add_masks(message: Message):
 	user_input = message.text if message.text else ""
 	for mask in user_input.split()[1:]:
-		masks.append(message.chat.id, mask)
+		masks.append(str(message.chat.id), mask)
 	if message.text == "/pin":
 		text = "usage: /pin spotify soundcloud"
 		bot.send_message(message.chat.id, text)
@@ -75,7 +81,7 @@ def add_masks(message: Message):
 
 @bot.message_handler(commands=["clear"])
 def clear_masks(message: Message):
-	masks.clear(message.chat.id)
+	masks.clear(str(message.chat.id))
 	show_masks(message)
 
 
@@ -84,7 +90,7 @@ def process_masks(message: Message) -> bool:
 	user_input = message.text if message.text else ""
 	for entity in entities:
 		text = user_input[entity.offset : entity.length]
-		has_masks = masks.validate(message.chat.id, text)
+		has_masks = masks.validate(str(message.chat.id), text)
 		if entity.type == "url" and has_masks:
 			return True
 	return False
