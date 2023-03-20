@@ -2,7 +2,7 @@ from telebot import TeleBot
 from telebot.types import Message
 import json
 
-bot = TeleBot("6139726981:AAHYXuNByfotN4RFPkIoepNKrSaaSvyJJMg", parse_mode=None)
+bot = TeleBot("6095365784:AAE55GYOWfchzSpLDJ6PbUmGH7vWN9qefs8", parse_mode=None)
 
 
 class State:
@@ -38,7 +38,6 @@ class State:
 
 	def flush(self) -> None:
 		with open("chat_state.json", "w") as write_file:
-			print(json.dumps(self.chat_state))
 			json.dump(self.chat_state, write_file)
 
 
@@ -51,10 +50,10 @@ def help(message):
 		message,
 		"""
 hi.
-this bot pins links so you can check them out later.
+agrippina pins links so you can check them out later.
 
 /pin to specify which links you would like to pin
-e.g. /pin spotify soundcloud
+usage: /pin spotify soundcloud
 
 /show to view the masks you use
 
