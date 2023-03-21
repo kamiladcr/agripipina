@@ -1,14 +1,20 @@
 from telebot import TeleBot
 from telebot.types import Message
 import json
+import os
 
-bot = TeleBot("6095365784:AAE55GYOWfchzSpLDJ6PbUmGH7vWN9qefs8", parse_mode=None)
+token = os.environ["TOKEN"]
+bot = TeleBot(token, parse_mode=None)
+print(f"token: {token}")
+
+state_file = "state/chat_state.json"
+os.makedirs("state", exist_ok=True)
 
 
 class State:
 	def __init__(self):
 		try:
-			with open("chat_state.json", "r") as read_file:
+			with open(state_file, "r") as read_file:
 				data = read_file.read()
 				self.chat_state = json.loads(data)
 		except Exception:
@@ -37,7 +43,7 @@ class State:
 		return self.chat_state[chat_id] if chat_id in self.chat_state else []
 
 	def flush(self) -> None:
-		with open("chat_state.json", "w") as write_file:
+		with open(state_file, "w") as write_file:
 			json.dump(self.chat_state, write_file)
 
 
