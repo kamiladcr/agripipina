@@ -52,12 +52,16 @@ def help(message):
 hi.
 agrippina pins links so you can check them out later.
 
+
 /pin to specify which links you would like to pin
 usage: /pin spotify soundcloud
 
 /show to view the masks you use
 
 /clear to clear the masks list
+
+
+note that agripipina needs administrator rights to pin messages in chats.
 		""",
 	)
 
